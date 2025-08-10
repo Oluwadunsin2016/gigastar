@@ -1,224 +1,647 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { User, Building2, Mail, Lock, Eye, EyeOff, ExternalLink } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { 
+  User, 
+  Building2, 
+  Heart, 
+  Mail, 
+  Phone, 
+  MapPin, 
+  Globe, 
+  Users, 
+  ExternalLink,
+  Youtube,
+  Instagram,
+  Twitter,
+  MessageCircle,
+  Facebook,
+  DollarSign
+} from 'lucide-react';
 import AuthLayout from '../components/AuthLayout';
 
 const SignUpPage = () => {
-  const [userType, setUserType] = useState('creator'); // 'creator' or 'brand'
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    confirmPassword: '',
-    firstName: '',
-    lastName: '',
-    companyName: '',
-    agreeToTerms: false
-  });
+  const [activeTab, setActiveTab] = useState('creator');
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [submittedData, setSubmittedData] = useState(null);
 
-  const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+    watch
+  } = useForm();
+
+  const tabs = [
+    { id: 'creator', label: 'Content Creator', icon: User, color: 'purple' },
+    { id: 'brand', label: 'Brand/Company', icon: Building2, color: 'blue' },
+    { id: 'fan', label: 'Fan', icon: Heart, color: 'pink' }
+  ];
+
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    reset(); // Clear form when switching tabs
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // Handle form submission
-    console.log('Sign up data:', { ...formData, userType });
+  const onSubmit = (data) => {
+    console.log('Form submitted:', { type: activeTab, ...data });
+    setSubmittedData({ type: activeTab, ...data });
+    setIsSubmitted(true);
   };
+
+  const getTabColor = (tabId) => {
+    const tab = tabs.find(t => t.id === tabId);
+    return tab?.color || 'gray';
+  };
+
+  const getColorClasses = (color, isActive = false) => {
+    const colors = {
+      purple: {
+        border: isActive ? 'border-purple-500' : 'border-gray-600',
+        bg: isActive ? 'bg-purple-500/10' : 'bg-gray-800/50',
+        text: isActive ? 'text-white' : 'text-gray-400',
+        focus: 'focus:border-purple-500 focus:ring-purple-500',
+        button: 'from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700'
+      },
+      blue: {
+        border: isActive ? 'border-blue-500' : 'border-gray-600',
+        bg: isActive ? 'bg-blue-500/10' : 'bg-gray-800/50',
+        text: isActive ? 'text-white' : 'text-gray-400',
+        focus: 'focus:border-blue-500 focus:ring-blue-500',
+        button: 'from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700'
+      },
+      pink: {
+        border: isActive ? 'border-pink-500' : 'border-gray-600',
+        bg: isActive ? 'bg-pink-500/10' : 'bg-gray-800/50',
+        text: isActive ? 'text-white' : 'text-gray-400',
+        focus: 'focus:border-pink-500 focus:ring-pink-500',
+        button: 'from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700'
+      }
+    };
+    return colors[color] || colors.gray;
+  };
+
+  if (isSubmitted) {
+    const idTypes = {
+      creator: 'Content Creator ID',
+      brand: 'Brand ID',
+      fan: 'Fans Club ID'
+    };
+
+    return (
+      <AuthLayout 
+        title="Registration Successful!" 
+        subtitle={`Welcome to GigaStar as a ${tabs.find(t => t.id === activeTab)?.label}`}
+        showBackButton={false}
+      >
+        <div className="text-center space-y-6">
+          <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto">
+            <Mail className="w-8 h-8 text-green-400" />
+          </div>
+          
+          <div className="space-y-2">
+            <p className="text-gray-300">
+              A welcome message with your {idTypes[activeTab]} has been sent to:
+            </p>
+            <p className="text-white font-medium">{submittedData?.email}</p>
+          </div>
+          
+          <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+            <p className="text-sm text-gray-400 mb-2">Registration Details:</p>
+            <div className="text-left space-y-1 text-sm">
+              <p className="text-gray-300">Type: <span className="text-white">{tabs.find(t => t.id === activeTab)?.label}</span></p>
+              {submittedData?.fullName && <p className="text-gray-300">Name: <span className="text-white">{submittedData.fullName}</span></p>}
+              {submittedData?.companyName && <p className="text-gray-300">Company: <span className="text-white">{submittedData.companyName}</span></p>}
+            </div>
+          </div>
+          
+          <Link 
+            to="/login"
+            className="inline-flex items-center justify-center w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105"
+          >
+            Continue to Login
+          </Link>
+        </div>
+      </AuthLayout>
+    );
+  }
 
   return (
     <AuthLayout 
       title="Join GigaStar" 
-      subtitle="Connect creators and investors in the digital economy"
+      subtitle="Choose your account type and get started"
     >
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* User Type Selection */}
-        <div className="space-y-3">
-          <label className="block text-sm font-medium text-gray-300">
-            I want to sign up as:
-          </label>
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              onClick={() => setUserType('creator')}
-              className={`p-4 rounded-xl border-2 transition-all duration-200 flex flex-col items-center space-y-2 ${
-                userType === 'creator'
-                  ? 'border-purple-500 bg-purple-500/10 text-white'
-                  : 'border-gray-600 bg-gray-800/50 text-gray-400 hover:border-gray-500'
-              }`}
-            >
-              <User className="w-6 h-6" />
-              <span className="font-medium">Content Creator</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setUserType('brand')}
-              className={`p-4 rounded-xl border-2 transition-all duration-200 flex flex-col items-center space-y-2 ${
-                userType === 'brand'
-                  ? 'border-blue-500 bg-blue-500/10 text-white'
-                  : 'border-gray-600 bg-gray-800/50 text-gray-400 hover:border-gray-500'
-              }`}
-            >
-              <Building2 className="w-6 h-6" />
-              <span className="font-medium">Brand/Investor</span>
-            </button>
-          </div>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        {/* Tab Selection */}
+        <div className="grid grid-cols-3 gap-2 p-1 bg-gray-800/50 rounded-xl">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            const colors = getColorClasses(tab.color, isActive);
+            
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => handleTabChange(tab.id)}
+                className={`p-3 rounded-lg border-2 transition-all duration-200 flex flex-col items-center space-y-1 ${colors.border} ${colors.bg} ${colors.text}`}
+              >
+                <Icon className="w-5 h-5" />
+                <span className="text-xs font-medium text-center leading-tight">{tab.label}</span>
+              </button>
+            );
+          })}
         </div>
 
-        {/* Name Fields */}
-        {userType === 'creator' ? (
-          <div className="grid grid-cols-2 gap-4">
+        {/* Content Creator Form */}
+        {activeTab === 'creator' && (
+          <div className="space-y-4">
+            {/* Full Name */}
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                First Name
+                Full Name *
               </label>
               <input
-                type="text"
-                name="firstName"
-                value={formData.firstName}
-                onChange={handleInputChange}
-                className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-colors"
-                placeholder="John"
-                required
+                {...register('fullName', { required: 'Full name is required' })}
+                className={`w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${getColorClasses('purple').focus}`}
+                placeholder="Enter your full name"
               />
+              {errors.fullName && <p className="text-red-400 text-sm mt-1">{errors.fullName.message}</p>}
             </div>
+
+            {/* Phone Number */}
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                Last Name
+                Phone Number *
               </label>
-              <input
-                type="text"
-                name="lastName"
-                value={formData.lastName}
-                onChange={handleInputChange}
-                className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-colors"
-                placeholder="Doe"
-                required
-              />
+              <div className="relative">
+                <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  {...register('phoneNumber', { required: 'Phone number is required' })}
+                  className={`w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${getColorClasses('purple').focus}`}
+                  placeholder="+1 (555) 123-4567"
+                />
+              </div>
+              {errors.phoneNumber && <p className="text-red-400 text-sm mt-1">{errors.phoneNumber.message}</p>}
             </div>
-          </div>
-        ) : (
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Company Name
-            </label>
-            <input
-              type="text"
-              name="companyName"
-              value={formData.companyName}
-              onChange={handleInputChange}
-              className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
-              placeholder="Your Company"
-              required
-            />
+
+            {/* Business Address */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Official Business Address *
+              </label>
+              <div className="relative">
+                <MapPin className="absolute left-3 top-3 text-gray-400 w-5 h-5" />
+                <textarea
+                  {...register('businessAddress', { required: 'Business address is required' })}
+                  rows={3}
+                  className={`w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors resize-none ${getColorClasses('purple').focus}`}
+                  placeholder="Enter your official business address"
+                />
+              </div>
+              {errors.businessAddress && <p className="text-red-400 text-sm mt-1">{errors.businessAddress.message}</p>}
+            </div>
+
+            {/* Email */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Official Email Address *
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type="email"
+                  {...register('email', { 
+                    required: 'Email is required',
+                    pattern: {
+                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                      message: 'Invalid email address'
+                    }
+                  })}
+                  className={`w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${getColorClasses('purple').focus}`}
+                  placeholder="your@email.com"
+                />
+              </div>
+              {errors.email && <p className="text-red-400 text-sm mt-1">{errors.email.message}</p>}
+            </div>
+
+            {/* Confirm Email */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Confirm Email Address *
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type="email"
+                  {...register('confirmEmail', { 
+                    required: 'Please confirm your email',
+                    validate: value => value === watch('email') || 'Emails do not match'
+                  })}
+                  className={`w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${getColorClasses('purple').focus}`}
+                  placeholder="Confirm your email"
+                />
+              </div>
+              {errors.confirmEmail && <p className="text-red-400 text-sm mt-1">{errors.confirmEmail.message}</p>}
+            </div>
+
+            {/* Social Media Links */}
+            <div className="space-y-3">
+              <label className="block text-sm font-medium text-gray-300">
+                Profile Links
+              </label>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="relative">
+                  <Youtube className="absolute left-3 top-1/2 transform -translate-y-1/2 text-red-500 w-5 h-5" />
+                  <input
+                    {...register('youtubeLink')}
+                    className={`w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${getColorClasses('purple').focus}`}
+                    placeholder="YouTube URL"
+                  />
+                </div>
+                
+                <div className="relative">
+                  <Instagram className="absolute left-3 top-1/2 transform -translate-y-1/2 text-pink-500 w-5 h-5" />
+                  <input
+                    {...register('instagramLink')}
+                    className={`w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${getColorClasses('purple').focus}`}
+                    placeholder="Instagram URL"
+                  />
+                </div>
+                
+                <div className="relative">
+                  <Twitter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-400 w-5 h-5" />
+                  <input
+                    {...register('twitterLink')}
+                    className={`w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${getColorClasses('purple').focus}`}
+                    placeholder="Twitter URL"
+                  />
+                </div>
+                
+                <div className="relative">
+                  <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <input
+                    {...register('tiktokLink')}
+                    className={`w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${getColorClasses('purple').focus}`}
+                    placeholder="TikTok URL"
+                  />
+                </div>
+                
+                <div className="relative sm:col-span-2">
+                  <MessageCircle className="absolute left-3 top-1/2 transform -translate-y-1/2 text-green-500 w-5 h-5" />
+                  <input
+                    {...register('whatsappLink')}
+                    className={`w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${getColorClasses('purple').focus}`}
+                    placeholder="WhatsApp Link"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Total Followers */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Total Followers Across All Platforms *
+              </label>
+              <div className="relative">
+                <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type="number"
+                  {...register('totalFollowers', { 
+                    required: 'Total followers is required',
+                    min: { value: 0, message: 'Must be a positive number' }
+                  })}
+                  className={`w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${getColorClasses('purple').focus}`}
+                  placeholder="e.g., 10000"
+                />
+              </div>
+              {errors.totalFollowers && <p className="text-red-400 text-sm mt-1">{errors.totalFollowers.message}</p>}
+            </div>
           </div>
         )}
 
-        {/* Email */}
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
-            Email Address
-          </label>
-          <div className="relative">
-            <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              className="w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-colors"
-              placeholder="your@email.com"
-              required
-            />
-          </div>
-        </div>
+        {/* Brand/Company Form */}
+        {activeTab === 'brand' && (
+          <div className="space-y-4">
+            {/* Company Name */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Company Name *
+              </label>
+              <input
+                {...register('companyName', { required: 'Company name is required' })}
+                className={`w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${getColorClasses('blue').focus}`}
+                placeholder="Enter company name"
+              />
+              {errors.companyName && <p className="text-red-400 text-sm mt-1">{errors.companyName.message}</p>}
+            </div>
 
-        {/* Password */}
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
-            Password
-          </label>
-          <div className="relative">
-            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <input
-              type={showPassword ? 'text' : 'password'}
-              name="password"
-              value={formData.password}
-              onChange={handleInputChange}
-              className="w-full pl-12 pr-12 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-colors"
-              placeholder="Create a strong password"
-              required
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
-            >
-              {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-            </button>
-          </div>
-        </div>
+            {/* Head Office Address */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Head Office Address *
+              </label>
+              <div className="relative">
+                <MapPin className="absolute left-3 top-3 text-gray-400 w-5 h-5" />
+                <textarea
+                  {...register('headOfficeAddress', { required: 'Head office address is required' })}
+                  rows={3}
+                  className={`w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors resize-none ${getColorClasses('blue').focus}`}
+                  placeholder="Enter head office address"
+                />
+              </div>
+              {errors.headOfficeAddress && <p className="text-red-400 text-sm mt-1">{errors.headOfficeAddress.message}</p>}
+            </div>
 
-        {/* Confirm Password */}
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
-            Confirm Password
-          </label>
-          <div className="relative">
-            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <input
-              type={showConfirmPassword ? 'text' : 'password'}
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleInputChange}
-              className="w-full pl-12 pr-12 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-colors"
-              placeholder="Confirm your password"
-              required
-            />
-            <button
-              type="button"
-              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
-            >
-              {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-            </button>
-          </div>
-        </div>
+            {/* Official Email */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Official Email Address *
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type="email"
+                  {...register('email', { 
+                    required: 'Email is required',
+                    pattern: {
+                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                      message: 'Invalid email address'
+                    }
+                  })}
+                  className={`w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${getColorClasses('blue').focus}`}
+                  placeholder="company@email.com"
+                />
+              </div>
+              {errors.email && <p className="text-red-400 text-sm mt-1">{errors.email.message}</p>}
+            </div>
 
-        {/* Terms Agreement */}
-        <div className="flex items-start space-x-3">
-          <input
-            type="checkbox"
-            name="agreeToTerms"
-            checked={formData.agreeToTerms}
-            onChange={handleInputChange}
-            className="mt-1 w-4 h-4 text-green-500 bg-gray-800 border-gray-600 rounded focus:ring-green-500 focus:ring-2"
-            required
-          />
-          <label className="text-sm text-gray-300">
-            I agree to the{' '}
-            <a href="#" className="text-green-400 hover:text-green-300 underline">
-              Terms of Service
-            </a>{' '}
-            and{' '}
-            <a href="#" className="text-green-400 hover:text-green-300 underline">
-              Privacy Policy
-            </a>
-          </label>
-        </div>
+            {/* Contact Person */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Contact Person Name *
+                </label>
+                <input
+                  {...register('contactPersonName', { required: 'Contact person name is required' })}
+                  className={`w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${getColorClasses('blue').focus}`}
+                  placeholder="Contact person"
+                />
+                {errors.contactPersonName && <p className="text-red-400 text-sm mt-1">{errors.contactPersonName.message}</p>}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Contact Person Phone *
+                </label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <input
+                    {...register('contactPersonPhone', { required: 'Contact person phone is required' })}
+                    className={`w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${getColorClasses('blue').focus}`}
+                    placeholder="+1 (555) 123-4567"
+                  />
+                </div>
+                {errors.contactPersonPhone && <p className="text-red-400 text-sm mt-1">{errors.contactPersonPhone.message}</p>}
+              </div>
+            </div>
+
+            {/* Registration Status */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Is your company registered? *
+              </label>
+              <div className="flex space-x-4">
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    value="yes"
+                    {...register('isRegistered', { required: 'Please select registration status' })}
+                    className="w-4 h-4 text-blue-500 bg-gray-800 border-gray-600 focus:ring-blue-500 focus:ring-2"
+                  />
+                  <span className="ml-2 text-gray-300">Yes</span>
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    value="no"
+                    {...register('isRegistered', { required: 'Please select registration status' })}
+                    className="w-4 h-4 text-blue-500 bg-gray-800 border-gray-600 focus:ring-blue-500 focus:ring-2"
+                  />
+                  <span className="ml-2 text-gray-300">No</span>
+                </label>
+              </div>
+              {errors.isRegistered && <p className="text-red-400 text-sm mt-1">{errors.isRegistered.message}</p>}
+            </div>
+
+            {/* RC Number (conditional) */}
+            {watch('isRegistered') === 'yes' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  RC Number *
+                </label>
+                <input
+                  {...register('rcNumber', { required: 'RC Number is required for registered companies' })}
+                  className={`w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${getColorClasses('blue').focus}`}
+                  placeholder="Enter RC Number"
+                />
+                {errors.rcNumber && <p className="text-red-400 text-sm mt-1">{errors.rcNumber.message}</p>}
+              </div>
+            )}
+
+            {/* Website */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Website
+              </label>
+              <div className="relative">
+                <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  {...register('website')}
+                  className={`w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${getColorClasses('blue').focus}`}
+                  placeholder="https://yourcompany.com"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Fan Form */}
+        {activeTab === 'fan' && (
+          <div className="space-y-4">
+            {/* Full Name */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Full Name *
+              </label>
+              <input
+                {...register('fullName', { required: 'Full name is required' })}
+                className={`w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${getColorClasses('pink').focus}`}
+                placeholder="Enter your full name"
+              />
+              {errors.fullName && <p className="text-red-400 text-sm mt-1">{errors.fullName.message}</p>}
+            </div>
+
+            {/* Phone Number */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Phone Number *
+              </label>
+              <div className="relative">
+                <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  {...register('phoneNumber', { required: 'Phone number is required' })}
+                  className={`w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${getColorClasses('pink').focus}`}
+                  placeholder="+1 (555) 123-4567"
+                />
+              </div>
+              {errors.phoneNumber && <p className="text-red-400 text-sm mt-1">{errors.phoneNumber.message}</p>}
+            </div>
+
+            {/* Address */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Address *
+              </label>
+              <div className="relative">
+                <MapPin className="absolute left-3 top-3 text-gray-400 w-5 h-5" />
+                <textarea
+                  {...register('address', { required: 'Address is required' })}
+                  rows={3}
+                  className={`w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors resize-none ${getColorClasses('pink').focus}`}
+                  placeholder="Enter your address"
+                />
+              </div>
+              {errors.address && <p className="text-red-400 text-sm mt-1">{errors.address.message}</p>}
+            </div>
+
+            {/* Email */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Email Address *
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type="email"
+                  {...register('email', { 
+                    required: 'Email is required',
+                    pattern: {
+                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                      message: 'Invalid email address'
+                    }
+                  })}
+                  className={`w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${getColorClasses('pink').focus}`}
+                  placeholder="your@email.com"
+                />
+              </div>
+              {errors.email && <p className="text-red-400 text-sm mt-1">{errors.email.message}</p>}
+            </div>
+
+            {/* Social Media Links */}
+            <div className="space-y-3">
+              <label className="block text-sm font-medium text-gray-300">
+                Profile Links
+              </label>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="relative">
+                  <Youtube className="absolute left-3 top-1/2 transform -translate-y-1/2 text-red-500 w-5 h-5" />
+                  <input
+                    {...register('youtubeLink')}
+                    className={`w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${getColorClasses('pink').focus}`}
+                    placeholder="YouTube URL"
+                  />
+                </div>
+                
+                <div className="relative">
+                  <Facebook className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-600 w-5 h-5" />
+                  <input
+                    {...register('facebookLink')}
+                    className={`w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${getColorClasses('pink').focus}`}
+                    placeholder="Facebook URL"
+                  />
+                </div>
+                
+                <div className="relative">
+                  <Instagram className="absolute left-3 top-1/2 transform -translate-y-1/2 text-pink-500 w-5 h-5" />
+                  <input
+                    {...register('instagramLink')}
+                    className={`w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${getColorClasses('pink').focus}`}
+                    placeholder="Instagram URL"
+                  />
+                </div>
+                
+                <div className="relative">
+                  <MessageCircle className="absolute left-3 top-1/2 transform -translate-y-1/2 text-green-500 w-5 h-5" />
+                  <input
+                    {...register('whatsappLink')}
+                    className={`w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${getColorClasses('pink').focus}`}
+                    placeholder="WhatsApp Link"
+                  />
+                </div>
+                
+                <div className="relative sm:col-span-2">
+                  <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <input
+                    {...register('tiktokLink')}
+                    className={`w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${getColorClasses('pink').focus}`}
+                    placeholder="TikTok URL"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Total Followers */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                How many followers altogether? *
+              </label>
+              <div className="relative">
+                <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type="number"
+                  {...register('totalFollowers', { 
+                    required: 'Total followers is required',
+                    min: { value: 0, message: 'Must be a positive number' }
+                  })}
+                  className={`w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${getColorClasses('pink').focus}`}
+                  placeholder="e.g., 5000"
+                />
+              </div>
+              {errors.totalFollowers && <p className="text-red-400 text-sm mt-1">{errors.totalFollowers.message}</p>}
+            </div>
+
+            {/* Payment Method */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                How do you want to be paid? *
+              </label>
+              <div className="relative">
+                <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <select
+                  {...register('paymentMethod', { required: 'Please select a payment method' })}
+                  className={`w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-1 transition-colors ${getColorClasses('pink').focus}`}
+                >
+                  <option value="">Select payment method</option>
+                  <option value="data">Data</option>
+                  <option value="airtime">Airtime</option>
+                  <option value="cash">Cash Deposit</option>
+                </select>
+              </div>
+              {errors.paymentMethod && <p className="text-red-400 text-sm mt-1">{errors.paymentMethod.message}</p>}
+            </div>
+          </div>
+        )}
 
         {/* Submit Button */}
         <button
           type="submit"
-          disabled={!formData.agreeToTerms}
-          className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 transform hover:scale-105 disabled:hover:scale-100"
+          className={`w-full bg-gradient-to-r text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 transform hover:scale-105 ${getColorClasses(getTabColor(activeTab)).button}`}
         >
-          <span>Create Account</span>
+          <span>Submit Registration</span>
           <ExternalLink className="w-4 h-4" />
         </button>
 

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, Send, ArrowLeft } from 'lucide-react';
-import AuthLayout from '../components/AuthLayout';
+import AuthLayout from '../layouts/AuthLayout';
 
 const ForgotPasswordPage = () => {
   const [email, setEmail] = useState('');

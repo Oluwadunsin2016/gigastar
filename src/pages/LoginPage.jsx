@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Mail, Lock, Eye, EyeOff, LogIn } from 'lucide-react';
-import AuthLayout from '../components/AuthLayout';
+import { Link, useNavigate } from 'react-router-dom';
+import { Mail, Lock, Eye, EyeOff, LogIn, ArrowLeft, ArrowRight } from 'lucide-react';
+import AuthLayout from '../layouts/AuthLayout';
+import { useAuth } from '../contexts/AuthContext';
+import { useLoginMutation } from '../apis/api';
+import { addToast } from '@heroui/react';
 
 const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -10,6 +13,9 @@ const LoginPage = () => {
     password: '',
     rememberMe: false
   });
+    const navigate = useNavigate();
+  const { login, user } = useAuth();
+  const mutation = useLoginMutation();
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -19,17 +25,96 @@ const LoginPage = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  // const handleSubmit = (e) => {
+  //   e.preventDefault();
+  //   // Handle form submission
+  //   console.log('Login data:', formData);
+    
+  //   // Mock login - in real app, this would be an API call
+  //   const mockUser = {
+  //     id: '1',
+  //     type: 'creator', // This would come from the API response
+  //     fullName: 'John Doe',
+  //     email: formData.email,
+  //     phoneNumber: '+1 (555) 123-4567',
+  //     businessAddress: '123 Creator Street, Los Angeles, CA 90210',
+  //     totalFollowers: 50000,
+  //     youtubeLink: 'https://youtube.com/@johndoe',
+  //     instagramLink: 'https://instagram.com/johndoe',
+  //     profileImage: null
+  //   };
+    
+  //   login(mockUser);
+  //   navigate('/');
+  // };
+
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle form submission
-    console.log('Login data:', formData);
+    
+    try {
+      const {data} = await mutation.mutateAsync(formData);    
+      await login(data.user, data.token);
+      if (user) {
+        addToast({
+          title: 'Success!',
+          description: 'Logged in successfully',
+          variant: "solid",
+          color: "success",
+          radius:'sm',
+          timeout: 2000,
+        })
+        navigate('/'); 
+      }
+    } catch (error) {
+      console.log('Login failed:', error.response.data.message || error.message);
+      addToast({
+        title: 'Login Failed',
+        description: error.response.data.message || 'Login failed. Please try again.',
+        variant: "solid",
+        color: "danger",
+        radius:'sm',
+        timeout: 2000,
+      })
+    }
   };
+
+  const handleGotoVerify = () => {
+    console.log('Navigating to verify email page with email:', formData.email);
+    
+    if (formData.email) {
+      navigate('/verify-email', { 
+        state: { 
+          email: formData.email,
+        } 
+      });
+    }else{
+      addToast({
+        title: 'Email Required',
+        description: 'Please enter your email to proceed.',
+        variant: "solid",
+        color: "warning",
+        radius:'sm',
+        timeout: 2000,
+      });
+    }
+  }
+
 
   return (
     <AuthLayout 
       title="Welcome Back" 
       subtitle="Sign in to your GigaStar account"
     >
+      <div className='flex justify-end '>
+      <p 
+      onClick={handleGotoVerify}
+              className="inline-flex items-center text-gray-400 hover:text-white transition-colors mb-6 group cursor-pointer"
+            >
+              Go to verify
+              <ArrowRight className="w-4 h-4 mr-2 group-hover:translate-x-1 transition-transform" />
+            </p>
+      </div>
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Email */}
         <div>
@@ -97,12 +182,30 @@ const LoginPage = () => {
         </div>
 
         {/* Submit Button */}
-        <button
+        {/* <button
           type="submit"
           className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 transform hover:scale-105"
         >
           <LogIn className="w-4 h-4" />
           <span>Sign In</span>
+        </button> */}
+
+<button
+          type="submit"
+          disabled={mutation.isPending}
+          className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 disabled:opacity-70 disabled:cursor-not-allowed"
+        >
+          {mutation.isPending ? (
+            <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          ) : (
+            <>
+              <LogIn className="w-4 h-4" />
+              <span>Sign In</span>
+            </>
+          )}
         </button>
 
         {/* Divider */}

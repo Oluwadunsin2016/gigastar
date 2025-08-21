@@ -108,11 +108,17 @@ const HeroSection = () => {
       }
     };
 
+    // const startTimer = () => {
+    //   clearTimer();
+    //   timerRef.current = setTimeout(() => {
+    //     triggerFadeTransition();
+    //   }, 2 * 60 * 1000); // 2 minutes in milliseconds
+    // };
     const startTimer = () => {
       clearTimer();
       timerRef.current = setTimeout(() => {
         triggerFadeTransition();
-      }, 1 * 60 * 1000); // 1 minute in milliseconds
+      }, 1/3 * 60 * 1000); // 2 minutes in milliseconds
     };
 
     const clearTimer = () => {
@@ -153,9 +159,9 @@ const HeroSection = () => {
   }, []);
 
   return (
-    <div className="relative min-h-screen overflow-hidden">
+    <div className="">
       {/* Background Video */}
-      <div className="absolute inset-0">
+      <div className="hidden md:block absolute inset-0">
         <div
           id="youtube-player"
           className="absolute inset-0 w-full h-full object-cover"
@@ -171,7 +177,7 @@ const HeroSection = () => {
       </div>
 
       {/* Content Container */}
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-16">
         <div className="grid lg:grid-cols-3 gap-16 items-center mt-12">
           <div className="space-y-8 lg:col-span-2">
             <div>

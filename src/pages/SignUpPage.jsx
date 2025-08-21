@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { 
   User, 
@@ -16,14 +16,22 @@ import {
   Twitter,
   MessageCircle,
   Facebook,
-  DollarSign
+  DollarSign,
+  Lock,
+  Eye,
+  EyeOff
 } from 'lucide-react';
-import AuthLayout from '../components/AuthLayout';
+import AuthLayout from '../layouts/AuthLayout';
+import { useSignupMutation } from '../apis/api';
+import { addToast } from '@heroui/react';
 
 const SignUpPage = () => {
   const [activeTab, setActiveTab] = useState('creator');
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [submittedData, setSubmittedData] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const navigate = useNavigate();
 
   const {
     register,
@@ -35,19 +43,54 @@ const SignUpPage = () => {
 
   const tabs = [
     { id: 'creator', label: 'Content Creator', icon: User, color: 'purple' },
-    { id: 'brand', label: 'Brand/Company', icon: Building2, color: 'blue' },
+    { id: 'brand', label: 'Brand or Company', icon: Building2, color: 'blue' },
     { id: 'fan', label: 'Fan', icon: Heart, color: 'pink' }
   ];
 
   const handleTabChange = (tabId) => {
     setActiveTab(tabId);
     reset(); // Clear form when switching tabs
+    setShowPassword(false);
+    setShowConfirmPassword(false);
   };
 
-  const onSubmit = (data) => {
-    console.log('Form submitted:', { type: activeTab, ...data });
-    setSubmittedData({ type: activeTab, ...data });
-    setIsSubmitted(true);
+  const mutation = useSignupMutation();
+
+  // const onSubmit = (data) => {
+  //   console.log('Form submitted:', { type: activeTab, ...data });
+  //   setSubmittedData({ type: activeTab, ...data });
+  //   setIsSubmitted(true);
+  // };
+
+
+  const onSubmit = async (data) => {
+    // Add account type to payload
+    const { confirmPassword, ...rest } = data;
+    const payload = {
+      ...rest,
+      type: activeTab
+    };
+
+    try {
+      await mutation.mutateAsync(payload);
+      
+      // Navigate to verification page with email
+      navigate('/verify-email', { 
+        state: { 
+          email: data.email,
+        } 
+      });
+    } catch (error) {
+      console.error('Registration failed:', error);
+        addToast({
+              title: 'Registration Failed!',
+              description: error.response.data.message || 'Registeration failed. Please try again.',
+              variant: "solid",
+              color: "danger",
+              radius:'sm',
+              timeout: 2000,
+            })
+    }
   };
 
   const getTabColor = (tabId) => {
@@ -82,50 +125,50 @@ const SignUpPage = () => {
     return colors[color] || colors.gray;
   };
 
-  if (isSubmitted) {
-    const idTypes = {
-      creator: 'Content Creator ID',
-      brand: 'Brand ID',
-      fan: 'Fans Club ID'
-    };
+  // if (isSubmitted) {
+  //   const idTypes = {
+  //     creator: 'Content Creator ID',
+  //     brand: 'Brand ID',
+  //     fan: 'Fans Club ID'
+  //   };
 
-    return (
-      <AuthLayout 
-        title="Registration Successful!" 
-        subtitle={`Welcome to GigaStar as a ${tabs.find(t => t.id === activeTab)?.label}`}
-        showBackButton={false}
-      >
-        <div className="text-center space-y-6">
-          <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto">
-            <Mail className="w-8 h-8 text-green-400" />
-          </div>
+  //   return (
+  //     <AuthLayout 
+  //       title="Registration Successful!" 
+  //       subtitle={`Welcome to GigaStar as a ${tabs.find(t => t.id === activeTab)?.label}`}
+  //       showBackButton={false}
+  //     >
+  //       <div className="text-center space-y-6">
+  //         <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto">
+  //           <Mail className="w-8 h-8 text-green-400" />
+  //         </div>
           
-          <div className="space-y-2">
-            <p className="text-gray-300">
-              A welcome message with your {idTypes[activeTab]} has been sent to:
-            </p>
-            <p className="text-white font-medium">{submittedData?.email}</p>
-          </div>
+  //         <div className="space-y-2">
+  //           <p className="text-gray-300">
+  //             A welcome message with your {idTypes[activeTab]} has been sent to:
+  //           </p>
+  //           <p className="text-white font-medium">{submittedData?.email}</p>
+  //         </div>
           
-          <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
-            <p className="text-sm text-gray-400 mb-2">Registration Details:</p>
-            <div className="text-left space-y-1 text-sm">
-              <p className="text-gray-300">Type: <span className="text-white">{tabs.find(t => t.id === activeTab)?.label}</span></p>
-              {submittedData?.fullName && <p className="text-gray-300">Name: <span className="text-white">{submittedData.fullName}</span></p>}
-              {submittedData?.companyName && <p className="text-gray-300">Company: <span className="text-white">{submittedData.companyName}</span></p>}
-            </div>
-          </div>
+  //         <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+  //           <p className="text-sm text-gray-400 mb-2">Registration Details:</p>
+  //           <div className="text-left space-y-1 text-sm">
+  //             <p className="text-gray-300">Type: <span className="text-white">{tabs.find(t => t.id === activeTab)?.label}</span></p>
+  //             {submittedData?.fullName && <p className="text-gray-300">Name: <span className="text-white">{submittedData.fullName}</span></p>}
+  //             {submittedData?.companyName && <p className="text-gray-300">Company: <span className="text-white">{submittedData.companyName}</span></p>}
+  //           </div>
+  //         </div>
           
-          <Link 
-            to="/login"
-            className="inline-flex items-center justify-center w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105"
-          >
-            Continue to Login
-          </Link>
-        </div>
-      </AuthLayout>
-    );
-  }
+  //         <Link 
+  //           to="/login"
+  //           className="inline-flex items-center justify-center w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105"
+  //         >
+  //           Continue to Login
+  //         </Link>
+  //       </div>
+  //     </AuthLayout>
+  //   );
+  // }
 
   return (
     <AuthLayout 
@@ -226,77 +269,117 @@ const SignUpPage = () => {
               {errors.email && <p className="text-red-400 text-sm mt-1">{errors.email.message}</p>}
             </div>
 
-            {/* Confirm Email */}
+            {/* Password */}
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                Confirm Email Address *
+                Password *
               </label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
-                  type="email"
-                  {...register('confirmEmail', { 
-                    required: 'Please confirm your email',
-                    validate: value => value === watch('email') || 'Emails do not match'
+                  type={showPassword ? "text" : "password"}
+                  {...register('password', { 
+                    required: 'Password is required',
+                    minLength: {
+                      value: 8,
+                      message: 'Password must be at least 8 characters'
+                    }
                   })}
-                  className={`w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${getColorClasses('purple').focus}`}
-                  placeholder="Confirm your email"
+                  className={`w-full pl-12 pr-12 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${getColorClasses('purple').focus}`}
+                  placeholder="Create a password"
                 />
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-200"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
               </div>
-              {errors.confirmEmail && <p className="text-red-400 text-sm mt-1">{errors.confirmEmail.message}</p>}
+              {errors.password && <p className="text-red-400 text-sm mt-1">{errors.password.message}</p>}
+            </div>
+
+            {/* Confirm Password */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Confirm Password *
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  {...register('confirmPassword', { 
+                    required: 'Please confirm your password',
+                    validate: value => value === watch('password') || 'Passwords do not match'
+                  })}
+                  className={`w-full pl-12 pr-12 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${getColorClasses('purple').focus}`}
+                  placeholder="Confirm your password"
+                />
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-200"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+              {errors.confirmPassword && <p className="text-red-400 text-sm mt-1">{errors.confirmPassword.message}</p>}
             </div>
 
             {/* Social Media Links */}
             <div className="space-y-3">
               <label className="block text-sm font-medium text-gray-300">
-                Profile Links
+                Social Links (optional)
               </label>
               
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="relative">
-                  <Youtube className="absolute left-3 top-1/2 transform -translate-y-1/2 text-red-500 w-5 h-5" />
-                  <input
-                    {...register('youtubeLink')}
-                    className={`w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${getColorClasses('purple').focus}`}
-                    placeholder="YouTube URL"
-                  />
+              <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700 space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="relative">
+                    <Youtube className="absolute left-3 top-1/2 transform -translate-y-1/2 text-red-500 w-5 h-5" />
+                    <input
+                      {...register('social_links.youtube')}
+                      className={`w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${getColorClasses('purple').focus}`}
+                      placeholder="YouTube URL"
+                    />
+                  </div>
+                  
+                  <div className="relative">
+                    <Instagram className="absolute left-3 top-1/2 transform -translate-y-1/2 text-pink-500 w-5 h-5" />
+                    <input
+                      {...register('social_links.instagram')}
+                      className={`w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${getColorClasses('purple').focus}`}
+                      placeholder="Instagram URL"
+                    />
+                  </div>
+                  
+                  <div className="relative">
+                    <Twitter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-400 w-5 h-5" />
+                    <input
+                      {...register('social_links.twitter')}
+                      className={`w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${getColorClasses('purple').focus}`}
+                      placeholder="Twitter URL"
+                    />
+                  </div>
+                  
+                  <div className="relative">
+                    <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <input
+                      {...register('social_links.tiktok')}
+                      className={`w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${getColorClasses('purple').focus}`}
+                      placeholder="TikTok URL"
+                    />
+                  </div>
+                  
+                  <div className="relative sm:col-span-2">
+                    <MessageCircle className="absolute left-3 top-1/2 transform -translate-y-1/2 text-green-500 w-5 h-5" />
+                    <input
+                      {...register('social_links.whatsapp')}
+                      className={`w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${getColorClasses('purple').focus}`}
+                      placeholder="WhatsApp Link"
+                    />
+                  </div>
                 </div>
-                
-                <div className="relative">
-                  <Instagram className="absolute left-3 top-1/2 transform -translate-y-1/2 text-pink-500 w-5 h-5" />
-                  <input
-                    {...register('instagramLink')}
-                    className={`w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${getColorClasses('purple').focus}`}
-                    placeholder="Instagram URL"
-                  />
-                </div>
-                
-                <div className="relative">
-                  <Twitter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-400 w-5 h-5" />
-                  <input
-                    {...register('twitterLink')}
-                    className={`w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${getColorClasses('purple').focus}`}
-                    placeholder="Twitter URL"
-                  />
-                </div>
-                
-                <div className="relative">
-                  <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  <input
-                    {...register('tiktokLink')}
-                    className={`w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${getColorClasses('purple').focus}`}
-                    placeholder="TikTok URL"
-                  />
-                </div>
-                
-                <div className="relative sm:col-span-2">
-                  <MessageCircle className="absolute left-3 top-1/2 transform -translate-y-1/2 text-green-500 w-5 h-5" />
-                  <input
-                    {...register('whatsappLink')}
-                    className={`w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${getColorClasses('purple').focus}`}
-                    placeholder="WhatsApp Link"
-                  />
-                </div>
+                <p className="text-xs text-gray-400 mt-1">Provide any social links you have (optional)</p>
               </div>
             </div>
 
@@ -378,6 +461,63 @@ const SignUpPage = () => {
               {errors.email && <p className="text-red-400 text-sm mt-1">{errors.email.message}</p>}
             </div>
 
+            {/* Password */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Password *
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  {...register('password', { 
+                    required: 'Password is required',
+                    minLength: {
+                      value: 8,
+                      message: 'Password must be at least 8 characters'
+                    }
+                  })}
+                  className={`w-full pl-12 pr-12 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${getColorClasses('blue').focus}`}
+                  placeholder="Create a password"
+                />
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-200"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+              {errors.password && <p className="text-red-400 text-sm mt-1">{errors.password.message}</p>}
+            </div>
+
+            {/* Confirm Password */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Confirm Password *
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  {...register('confirmPassword', { 
+                    required: 'Please confirm your password',
+                    validate: value => value === watch('password') || 'Passwords do not match'
+                  })}
+                  className={`w-full pl-12 pr-12 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${getColorClasses('blue').focus}`}
+                  placeholder="Confirm your password"
+                />
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-200"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+              {errors.confirmPassword && <p className="text-red-400 text-sm mt-1">{errors.confirmPassword.message}</p>}
+            </div>
+
             {/* Contact Person */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
@@ -417,7 +557,7 @@ const SignUpPage = () => {
                 <label className="flex items-center">
                   <input
                     type="radio"
-                    value="yes"
+                    value={true}
                     {...register('isRegistered', { required: 'Please select registration status' })}
                     className="w-4 h-4 text-blue-500 bg-gray-800 border-gray-600 focus:ring-blue-500 focus:ring-2"
                   />
@@ -426,7 +566,7 @@ const SignUpPage = () => {
                 <label className="flex items-center">
                   <input
                     type="radio"
-                    value="no"
+                    value={false}
                     {...register('isRegistered', { required: 'Please select registration status' })}
                     className="w-4 h-4 text-blue-500 bg-gray-800 border-gray-600 focus:ring-blue-500 focus:ring-2"
                   />
@@ -437,7 +577,7 @@ const SignUpPage = () => {
             </div>
 
             {/* RC Number (conditional) */}
-            {watch('isRegistered') === 'yes' && (
+            {watch('isRegistered') && (
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   RC Number *
@@ -540,57 +680,117 @@ const SignUpPage = () => {
               {errors.email && <p className="text-red-400 text-sm mt-1">{errors.email.message}</p>}
             </div>
 
+            {/* Password */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Password *
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  {...register('password', { 
+                    required: 'Password is required',
+                    minLength: {
+                      value: 8,
+                      message: 'Password must be at least 8 characters'
+                    }
+                  })}
+                  className={`w-full pl-12 pr-12 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${getColorClasses('pink').focus}`}
+                  placeholder="Create a password"
+                />
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-200"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+              {errors.password && <p className="text-red-400 text-sm mt-1">{errors.password.message}</p>}
+            </div>
+
+            {/* Confirm Password */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Confirm Password *
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  {...register('confirmPassword', { 
+                    required: 'Please confirm your password',
+                    validate: value => value === watch('password') || 'Passwords do not match'
+                  })}
+                  className={`w-full pl-12 pr-12 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${getColorClasses('pink').focus}`}
+                  placeholder="Confirm your password"
+                />
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-200"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+              {errors.confirmPassword && <p className="text-red-400 text-sm mt-1">{errors.confirmPassword.message}</p>}
+            </div>
+
             {/* Social Media Links */}
             <div className="space-y-3">
               <label className="block text-sm font-medium text-gray-300">
-                Profile Links
+                Social Links (optional)
               </label>
               
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="relative">
-                  <Youtube className="absolute left-3 top-1/2 transform -translate-y-1/2 text-red-500 w-5 h-5" />
-                  <input
-                    {...register('youtubeLink')}
-                    className={`w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${getColorClasses('pink').focus}`}
-                    placeholder="YouTube URL"
-                  />
+              <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700 space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="relative">
+                    <Youtube className="absolute left-3 top-1/2 transform -translate-y-1/2 text-red-500 w-5 h-5" />
+                    <input
+                      {...register('social_links.youtube')}
+                      className={`w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${getColorClasses('pink').focus}`}
+                      placeholder="YouTube URL"
+                    />
+                  </div>
+                  
+                  <div className="relative">
+                    <Facebook className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-600 w-5 h-5" />
+                    <input
+                      {...register('social_links.facebook')}
+                      className={`w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${getColorClasses('pink').focus}`}
+                      placeholder="Facebook URL"
+                    />
+                  </div>
+                  
+                  <div className="relative">
+                    <Instagram className="absolute left-3 top-1/2 transform -translate-y-1/2 text-pink-500 w-5 h-5" />
+                    <input
+                      {...register('social_links.instagram')}
+                      className={`w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${getColorClasses('pink').focus}`}
+                      placeholder="Instagram URL"
+                    />
+                  </div>
+                  
+                  <div className="relative">
+                    <MessageCircle className="absolute left-3 top-1/2 transform -translate-y-1/2 text-green-500 w-5 h-5" />
+                    <input
+                      {...register('social_links.whatsapp')}
+                      className={`w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${getColorClasses('pink').focus}`}
+                      placeholder="WhatsApp Link"
+                    />
+                  </div>
+                  
+                  <div className="relative sm:col-span-2">
+                    <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <input
+                      {...register('social_links.tiktok')}
+                      className={`w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${getColorClasses('pink').focus}`}
+                      placeholder="TikTok URL"
+                    />
+                  </div>
                 </div>
-                
-                <div className="relative">
-                  <Facebook className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-600 w-5 h-5" />
-                  <input
-                    {...register('facebookLink')}
-                    className={`w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${getColorClasses('pink').focus}`}
-                    placeholder="Facebook URL"
-                  />
-                </div>
-                
-                <div className="relative">
-                  <Instagram className="absolute left-3 top-1/2 transform -translate-y-1/2 text-pink-500 w-5 h-5" />
-                  <input
-                    {...register('instagramLink')}
-                    className={`w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${getColorClasses('pink').focus}`}
-                    placeholder="Instagram URL"
-                  />
-                </div>
-                
-                <div className="relative">
-                  <MessageCircle className="absolute left-3 top-1/2 transform -translate-y-1/2 text-green-500 w-5 h-5" />
-                  <input
-                    {...register('whatsappLink')}
-                    className={`w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${getColorClasses('pink').focus}`}
-                    placeholder="WhatsApp Link"
-                  />
-                </div>
-                
-                <div className="relative sm:col-span-2">
-                  <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  <input
-                    {...register('tiktokLink')}
-                    className={`w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${getColorClasses('pink').focus}`}
-                    placeholder="TikTok URL"
-                  />
-                </div>
+                <p className="text-xs text-gray-400 mt-1">Provide any social links you have (optional)</p>
               </div>
             </div>
 
@@ -637,12 +837,26 @@ const SignUpPage = () => {
         )}
 
         {/* Submit Button */}
+
         <button
           type="submit"
-          className={`w-full bg-gradient-to-r text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 transform hover:scale-105 ${getColorClasses(getTabColor(activeTab)).button}`}
+          disabled={mutation.isPending}
+          className={`w-full bg-gradient-to-r text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 ${mutation.isPending ? 'opacity-70 cursor-not-allowed' : 'transform hover:scale-105'} ${getColorClasses(getTabColor(activeTab)).button}`}
         >
-          <span>Submit Registration</span>
-          <ExternalLink className="w-4 h-4" />
+          {mutation.isPending ? (
+            <>
+              <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span>Registering...</span>
+            </>
+          ) : (
+            <>
+              <span>Submit Registration</span>
+              <ExternalLink className="w-4 h-4" />
+            </>
+          )}
         </button>
 
         {/* Login Link */}

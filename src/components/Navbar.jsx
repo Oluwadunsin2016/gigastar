@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import { Menu, X, ChevronDown, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import UserDropdown from './UserDropdown';
+import { useAuth } from '../contexts/AuthContext';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isResourcesOpen, setIsResourcesOpen] = useState(false);
+  const { isAuthenticated } = useAuth();
 
   return (
-    <nav className="relative bg-black/50 backdrop-blur-sm !border-b !border-white/20 z-50">
+    <nav className="relative bg-black backdrop-blur-sm !border-b !border-white/20 z-50">
       {/* Top Support Bar - Desktop Only */}
       {/* <div className="hidden lg:block bg-black/30 py-2">
         <div className="max-w-7xl mx-auto px-6 flex justify-between items-center text-sm">
@@ -25,7 +28,7 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <div className="flex items-center">
+          <Link to="/" className="flex items-center">
             <div className="flex-shrink-0">
               <div className="flex items-center space-x-2">
                 <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
@@ -34,7 +37,7 @@ const Navbar = () => {
                 <span className="text-white text-xl font-bold">GigaStar</span>
               </div>
             </div>
-          </div>
+          </Link>
 
           {/* Desktop Navigation */}
           <div className="hidden md:block">
@@ -83,10 +86,13 @@ const Navbar = () => {
 
           {/* Desktop Action Buttons */}
           <div className="hidden md:flex items-center space-x-4">
-          <Link to="/signup" className="block w-full px-4 py-2 text-green-400 border border-green-400 rounded-lg hover:bg-green-400 hover:text-black transition-all duration-200 text-center">
-          Sign Up
-              </Link>
-         
+            {isAuthenticated ? (
+              <UserDropdown />
+            ) :
+         ( <Link to="/login" className="block w-full px-4 py-2 text-green-400 border border-green-400 rounded-lg hover:bg-green-400 hover:text-black transition-all duration-200 text-center">
+          Sign In
+              </Link>)
+}
           </div>
 
           {/* Mobile menu button */}
@@ -105,27 +111,32 @@ const Navbar = () => {
       {isMenuOpen && (
         <div className="md:hidden absolute top-full left-0 w-full bg-gray-900 backdrop-blur-sm border-b border-gray-700">
           <div className="px-4 pt-2 pb-6 space-y-1">
-            <a href="#" className="block px-3 py-2 text-gray-300 hover:text-white transition-colors">
+            <a href="#" onClick={()=>setIsMenuOpen(false)} className="block px-3 py-2 text-gray-300 hover:text-white transition-colors">
               Content Creators
             </a>
-            <a href="#" className="block px-3 py-2 text-gray-300 hover:text-white transition-colors">
+            <a href="#" onClick={()=>setIsMenuOpen(false)} className="block px-3 py-2 text-gray-300 hover:text-white transition-colors">
               Brands
             </a>
-            <a href="#" className="block px-3 py-2 text-gray-300 hover:text-white transition-colors">
+            <a href="#" onClick={()=>setIsMenuOpen(false)} className="block px-3 py-2 text-gray-300 hover:text-white transition-colors">
              Fans
             </a>
-            <a href="#" className="block px-3 py-2 text-gray-300 hover:text-white transition-colors">
+            <a href="#" onClick={()=>setIsMenuOpen(false)} className="block px-3 py-2 text-gray-300 hover:text-white transition-colors">
               Investors
             </a>
-            <a href="#" className="block px-3 py-2 text-gray-300 hover:text-white transition-colors">
+            <a href="#" onClick={()=>setIsMenuOpen(false)} className="block px-3 py-2 text-gray-300 hover:text-white transition-colors">
               Resources
             </a>
-            
-            <div className="pt-4 space-y-3">
-            <Link to="/signup" className="block w-full px-4 py-2 text-green-400 border border-green-400 rounded-lg hover:bg-green-400 hover:text-black transition-all duration-200 text-center">
-            Sign Up
-              </Link>
-            </div>
+            <div className="space-x-4">
+            {isAuthenticated ? (
+              <UserDropdown setIsMenuOpen={setIsMenuOpen} />
+            ) :
+         (    <div className="pt-4 space-y-3">
+          <Link to="/login" className="block w-full px-4 py-2 text-green-400 border border-green-400 rounded-lg hover:bg-green-400 hover:text-black transition-all duration-200 text-center">
+          Sign In
+            </Link>
+          </div>)
+}
+          </div>        
           </div>
         </div>
       )}
